@@ -9,7 +9,7 @@ Docker Compose version v5.3.1
 ```
 ## Задача 1
 
-1. Сделал форк [Репозиторий](https://github.com/Folau1/shvirtd-example-python)
+1. Ссылка на fork: [shvirtd-example-python](https://github.com/Folau1/shvirtd-example-python)
 
 2. Создаем файлы Dockerfile.python на основе Dockerfile в репозитории.
 
@@ -241,7 +241,7 @@ services:
     env_file:
       - .env
     healthcheck:     #тут проверяем готовность Mysql
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWO>
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -271,6 +271,11 @@ docker exec -ti db mysql -uroot -p"$MYSQL_ROOT_PASSWORD"
 
 Результат запросов ниже на скриншоте:
 <img width="744" height="607" alt="image" src="https://github.com/user-attachments/assets/f32c9d2c-3977-4182-8c45-6e49ae362b84" />
+
+После проверки остановил проект:
+```bash
+docker compose down
+```
 
 ## Задача 4
 Задание с 1-2 пропускаем, т.к. я делал всё внутри ВМ Яндекс Клауда.
