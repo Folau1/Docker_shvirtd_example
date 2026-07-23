@@ -84,7 +84,7 @@ source venv/bin/activate
 С помощью команды python -m pip install -r requirements.txt мы устанавливаем зависимости внутри вирт пространства.
 venv создаёт отдельный каталог с интерпретатором и установленными библиотеками. Активация просто ставит его bin в начало PATH. Это всё написано [Тут](https://docs.python.org/3/library/venv.html)
 Сам MYSQL можно запустить через RUN по заданию.
-На официальной[странице](https://hub.docker.com/_/mysql) можно подробно посмотреть как запускать через run MYSQL.
+На официальной [странице](https://hub.docker.com/_/mysql) можно подробно посмотреть как запускать через run MYSQL.
 Примерно по такому же принципу делает так:
 ```
 source .env
@@ -93,7 +93,7 @@ docker run -d --name mysql -p 127.0.0.1:3306:3306 -e MYSQL_ROOT_PASSWORD="$MYSQL
 
 И теперь на порту 5000 запускаем наше python приложение через unicor 
 ```
-uvicorn main:app --host 0.0.0.0 --port 5000 --reload
+(venv) root@compute-vm-2-2-20-ssd-1783340222914:~/uvicorn main:app --host 0.0.0.0 --port 5000 --reload
 INFO:     Will watch for changes in these directories: ['/root/homework/shvirtd-example-python']
 INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
 INFO:     Started reloader process [81119] using WatchFiles
@@ -103,6 +103,44 @@ INFO:     Waiting for application startup.
 Соединение с БД установлено и таблица 'requests' готова к работе.
 INFO:     Application startup complete.
 ```
+4. (Необязательная часть, *) Изучите код приложения и добавьте управление названием таблицы через ENV переменную.
+
+Изучив код main.py, можно заметить, что название таблицы requests было жёстко прописано в запросах создания, записи и чтения таблицы.
+
+Добавил получение названия таблицы DB_TABLE:
+
+```python
+db_table = os.environ.get('DB_TABLE', 'requests')
+```
+
+Если переменная DB_TABLE не задана, приложение продолжит использовать таблицу requests.
+
+Изменил сообщение о подключении к базе данных:
+
+```python
+print(f"Соединение с БД установлено и таблица '{db_table}' готова к работе.")
+```
+
+Создание таблицы теперь использует значение DB_TABLE:
+
+```python
+CREATE TABLE IF NOT EXISTS {db_name}.{db_table} (
+```
+
+В двух местах изменил запрос записи данных:
+
+```python
+query = f"INSERT INTO {db_table} (request_date, request_ip) VALUES (%s, %s)"
+```
+
+В двух местах изменил запрос чтения данных:
+
+```python
+query = f"SELECT id, request_date, request_ip FROM {db_table} ORDER BY id DESC LIMIT 50"
+```
+
+Маршрут /requests не изменял, потому что это адрес приложения, а не название таблицы MYSQL.
+
 ## Задача 2 (*)
 
 Устанавливаем Yandex Cloud CLI по официальной [инструкции](https://yandex.cloud/ru/docs/cli/operations/install-cli).
@@ -141,6 +179,21 @@ yc container image list --repository-name=crpbd1dq093c89j0vma9/projectx
 | crptcfcffg39m3sl39ra | 2026-07-22 07:31:57 | crpbd1dq093c89j0vma9/projectx | sha256:95d43b6fbb9cd0f8b83e2a48ddbb5a4cb71f8e27f2c04071a6d9241902c44900 | 1.7 KB          |
 +----------------------+---------------------+-------------------------------+-------------------------------------------------------------------------+-----------------+
 ```
+Отчёт сканирования:
+```
+yc container image scan crpei3sufldp160lfjvv
+done (31s)
+id: chekk9e5nt98o6755u5a
+image_id: crpei3sufldp160lfjvv
+status: READY
+vulnerabilities:
+  critical: "4"
+  high: "19"
+  medium: "54"
+  low: "63"
+  undefined: "28"
+```
+<img width="748" height="314" alt="image" src="https://github.com/user-attachments/assets/f61a49e8-b2d5-465f-8516-e0ea51c5166e" />
 
 ## Задача 3 
 1. Изучив proxy.yaml можно увидеть, что это compos файл для haproxy и nginx.
@@ -199,6 +252,11 @@ services:
 volumes:    #Том для mysql
   mysql_data:
 ```
+Результат проверки:
+```
+curl -L http://127.0.0.1:8090
+"TIME: 2026-07-22 09:38:44, IP: 127.0.0.1"
+```
 
 Далее билдим и запускаем проект командами:
 ```
@@ -210,6 +268,7 @@ docker compose up -d
 source .env
 docker exec -ti db mysql -uroot -p"$MYSQL_ROOT_PASSWORD"
 ```
+
 Результат запросов ниже на скриншоте:
 <img width="744" height="607" alt="image" src="https://github.com/user-attachments/assets/f32c9d2c-3977-4182-8c45-6e49ae362b84" />
 
@@ -240,6 +299,11 @@ chmod +x deploy.sh
 ```
 ./deploy.sh
 ```
+Ддосим наш сервис:
+
+<img width="1014" height="779" alt="image" src="https://github.com/user-attachments/assets/67f246f1-de06-464d-94a3-0d7c720f710a" />
+
+
 5. Remote ssh контекст к моему серверу. делал со своего ПК.
 Вот вывод:
 ```
@@ -271,5 +335,94 @@ PS C:\Users\Александр\Documents\Netology_work>
 <img width="1079" height="914" alt="image" src="https://github.com/user-attachments/assets/ebb1be45-1c5e-4662-a040-dd94d23dcfba" />
 Последние:
 <img width="1081" height="925" alt="image" src="https://github.com/user-attachments/assets/5019821b-1006-4e74-b6cd-78547910c680" />
+
+## Задание 5
+1. Делаем простеньки bash скрипт для резервного копирования баз данных:
+```
+#!/usr/bin/env bash
+
+set -e
+
+source /opt/mysql-backup.env
+
+BACKUP_DIR="/opt/backup"
+NETWORK="shvirtd-example-python_backend"
+BACKUP_FILE="${MYSQL_DATABASE}_$(date +%Y-%m-%d_%H-%M-%S).sql"
+
+mkdir -p "$BACKUP_DIR"
+
+docker run --rm \
+    --network "$NETWORK" \
+    --entrypoint "" \
+    -v "$BACKUP_DIR:/backup" \
+    -e MYSQL_HOST="db" \
+    -e MYSQL_USER="$MYSQL_USER" \
+    -e MYSQL_PASSWORD="$MYSQL_PASSWORD" \
+    -e MYSQL_DATABASE="$MYSQL_DATABASE" \
+    -e BACKUP_FILE="$BACKUP_FILE" \
+    schnitzler/mysqldump \
+    sh -c '
+        apk add --no-cache mariadb-connector-c >/dev/null &&
+        mysqldump \
+            --opt \
+            --single-transaction \
+            --no-tablespaces \
+            -h "$MYSQL_HOST" \
+            -u "$MYSQL_USER" \
+            -p"$MYSQL_PASSWORD" \
+            --result-file="/backup/$BACKUP_FILE" \
+            "$MYSQL_DATABASE"
+    '
+
+echo "Создана резервная копия: $BACKUP_DIR/$BACKUP_FILE"
+```
+2.Делаем ручной запуск:
+```
+root@compute-vm-2-2-20-ssd-1783340222914:~/homework/shvirtd-example-python# /opt/backup-db.sh
+Создана резервная копия: /opt/backup/virtd_2026-07-23_05-01-47.sql
+```
+3.Настраиваем автоматический запуск скрипта каждую минуту через crontab.
+Для этого пишем:
+
+```bash
+crontab -e
+```
+И в самом конце добавляем строку:
+```cron
+* * * * * /opt/backup-db.sh >> /var/log/mysql-backup.log 2>&1
+```
+Будет раз в минуту запускаться баш скрипт и писаться логи в /var/log/mysql-backup.log.
+Проверяем добавленное, должен файл целиком появиться:
+```console
+root@compute-vm-2-2-20-ssd-1783340222914:~/homework/shvirtd-example-python# crontab -l
+* * * * * /opt/backup-db.sh >> /var/log/mysql-backup.log 2>&1
+```
+А для того, чтобы не хранить данные логина и пароля в Git, данные для подключения к MSYQL мы добавим в отдельный файл: /opt/mysql-backup.env. По bash скрипту выше это видно. 
+Файл находится вне Git-репозитория и доступен только пользователю root
+```console
+stat -c '%A %a %n' /opt/mysql-backup.env
+-rw------- 600 /opt/mysql-backup.env
+```
+Да и сам скрипт доступен только пользователю root:
+```console
+stat -c '%A %a %n' /opt/backup-db.sh
+-rwx------ 700 /opt/backup-db.sh
+```
+
+
+4.Скриншот crontab -l и самого bash скрипта:
+
+<img width="807" height="905" alt="image" src="https://github.com/user-attachments/assets/d8798385-7792-4b22-87e3-abdb3dfc5647" />
+
+Скриншот нескольких автоматически созданных резервных копий:
+<img width="677" height="303" alt="image" src="https://github.com/user-attachments/assets/064e3451-a1a1-46f5-acbf-27ccc8a00def" />
+
+## Задача 6.
+
+<img width="779" height="375" alt="image" src="https://github.com/user-attachments/assets/a09b0665-2d0d-495a-b8ed-0e7babf7ec82" />
+<img width="770" height="611" alt="image" src="https://github.com/user-attachments/assets/12877adc-8b07-4e92-beb4-06eec5989c3e" />
+<img width="783" height="199" alt="image" src="https://github.com/user-attachments/assets/2a102915-986d-4561-bfc6-2ae36dfe4949" />
+<img width="770" height="620" alt="image" src="https://github.com/user-attachments/assets/89ed116e-0561-494c-92d7-c2488b2f68be" />
+
 
 
