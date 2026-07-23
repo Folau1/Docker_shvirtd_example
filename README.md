@@ -419,10 +419,26 @@ stat -c '%A %a %n' /opt/backup-db.sh
 
 ## Задача 6.
 
+1. Скачал образ Terraform в архив.
+
 <img width="779" height="375" alt="image" src="https://github.com/user-attachments/assets/a09b0665-2d0d-495a-b8ed-0e7babf7ec82" />
+
+2. Скопировал архив на сервер.
+
 <img width="770" height="611" alt="image" src="https://github.com/user-attachments/assets/12877adc-8b07-4e92-beb4-06eec5989c3e" />
+
+3. Загрузил образ в Docker.
+
 <img width="783" height="199" alt="image" src="https://github.com/user-attachments/assets/2a102915-986d-4561-bfc6-2ae36dfe4949" />
+
+4. Через dive нашёл файл /bin/terraform.
+
+<img width="760" height="625" alt="image" src="https://github.com/user-attachments/assets/d19b5853-5165-4050-8702-c59ea3fed3ca" />
+
+5. Сохранил образ командой docker save.
+
+<img width="789" height="305" alt="image" src="https://github.com/user-attachments/assets/60ed1bfc-1da4-4379-826c-4ce81030fc8d" />
+
+6. Достал файл /bin/terraform из сохранённого образа и скопировал его на компьютер.
+
 <img width="770" height="620" alt="image" src="https://github.com/user-attachments/assets/89ed116e-0561-494c-92d7-c2488b2f68be" />
-
-
-
